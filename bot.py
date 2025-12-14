@@ -138,7 +138,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
         [
-            InlineKeyboardButton("📋 Ro'yxat", callback_data="cmd_list"),
+            InlineKeyboardButton("📋 Barcha Kinolar ", callback_data="cmd_list"),
             InlineKeyboardButton("🎲 Tasodifiy", callback_data="cmd_random")
         ],
         [
@@ -1004,3 +1004,4 @@ if __name__ == '__main__':
         logger.warning("BOT_TOKEN not set. Webhook not configured.")
 
     app.run(host='0.0.0.0', port=PORT, debug=False, threaded=True)
+
