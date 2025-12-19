@@ -12,7 +12,7 @@ db = SQLAlchemy(model_class=Base)
 
 class Movie(db.Model):
     __tablename__ = 'movies'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     movie_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(500), nullable=False)
@@ -21,7 +21,7 @@ class Movie(db.Model):
     channel_id = db.Column(db.String(100))
     message_id = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'name': self.name,
@@ -30,3 +30,14 @@ class Movie(db.Model):
             'channel_id': self.channel_id,
             'message_id': self.message_id
         }
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(100), unique=True, nullable=False)
+    first_name = db.Column(db.String(255))
+    username = db.Column(db.String(255))
+    interaction_count = db.Column(db.Integer, default=0)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
