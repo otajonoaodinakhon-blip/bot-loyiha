@@ -41,3 +41,21 @@ class User(db.Model):
     username = db.Column(db.String(255))
     interaction_count = db.Column(db.Integer, default=0)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class AdminLink(db.Model):
+    __tablename__ = 'admin_links'
+
+    id = db.Column(db.Integer, primary_key=True)
+    link_id = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(500), nullable=False)
+    file_id = db.Column(db.String(255), nullable=False)
+    channel_link = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'file_id': self.file_id,
+            'channel_link': self.channel_link
+        }
