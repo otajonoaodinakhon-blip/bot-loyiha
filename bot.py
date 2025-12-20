@@ -1,4 +1,3 @@
-
 import os
 import logging
 import asyncio
@@ -581,6 +580,42 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     track_user(user_id, user_name, username)
 
+    # Rasim link uchun kanal linkini qabul qilish
+    if context.user_data.get('waiting_for_photo_link'):
+        if str(user_id) != ADMIN_ID:
+            return
+        
+        channel_link = update.message.text.strip()
+        
+        if not channel_link.startswith('http'):
+            await update.message.reply_text("❌ <b>Noto'g'ri link!</b>\n\nHTTP yoki HTTPS link yubor.", parse_mode='HTML')
+            return
+
+        photo_name = context.user_data.get('photo_name')
+        photo_file_id = context.user_data.get('photo_file_id')
+
+        if not photo_name or not photo_file_id:
+            await update.message.reply_text("❌ Xoto! Rasmni qayta forward qiling.", parse_mode='HTML')
+            return
+
+        link_id = save_admin_link(photo_name, photo_file_id, channel_link)
+        
+        context.user_data['waiting_for_photo_link'] = False
+        context.user_data.pop('photo_name', None)
+        context.user_data.pop('photo_file_id', None)
+
+        success_text = (
+            f"✅ <b>LINK SAQLANDI!</b>\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📸 <b>Nomi:</b> {photo_name}\n"
+            f"🔗 <b>Link ID:</b> <code>{link_id}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"<i>/link {link_id}</i> - inline tugmali post qilish"
+        )
+
+        await update.message.reply_text(success_text, parse_mode='HTML')
+        return
+
     if context.user_data.get('waiting_for_createlink'):
         if not update.message.photo and not update.message.video and not update.message.audio:
             await update.message.reply_text("📸 Rasm, video yoki audio jo'nating!", parse_mode='HTML')
@@ -628,46 +663,7 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result_text = f"🔍 <b>QIDIRUV NATIJALARI</b>\n\n━━━━━━━━━━━━━━━━━━━━\n📊 Topildi: <b>{total}</b> ta\n📄 Sahifa: <b>{page + 1}</b> / <b>{(total - 1) // MOVIES_PER_PAGE + 1}</b>\n━━━━━━━━━━━━━━━━━━━━\n\n👇 Kinoni tanlang:"
 
     await update.message.reply_text(result_text, reply_markup=reply_markup, parse_mode='HTML')
-
-
-async def handle_photo_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Rasim uchun kanal linkini qabul qilish"""
-    user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
-        return
-
-    if not context.user_data.get('waiting_for_photo_link'):
-        return
-
-    channel_link = update.message.text.strip()
-    
-    if not channel_link.startswith('http'):
-        await update.message.reply_text("❌ <b>Noto'g'ri link!</b>\n\nHTTP yoki HTTPS link yubor.", parse_mode='HTML')
-        return
-
-    photo_name = context.user_data.get('photo_name')
-    photo_file_id = context.user_data.get('photo_file_id')
-
-    if not photo_name or not photo_file_id:
-        await update.message.reply_text("❌ Xoto! Rasmni qayta forward qiling.", parse_mode='HTML')
-        return
-
-    link_id = save_admin_link(photo_name, photo_file_id, channel_link)
-    
-    context.user_data['waiting_for_photo_link'] = False
-    context.user_data.pop('photo_name', None)
-    context.user_data.pop('photo_file_id', None)
-
-    success_text = (
-        f"✅ <b>LINK SAQLANDI!</b>\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"📸 <b>Nomi:</b> {photo_name}\n"
-        f"🔗 <b>Link ID:</b> <code>{link_id}</code>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"<i>/link {link_id}</i> - inline tugmali post qilish"
-    )
-
-    await update.message.reply_text(success_text, parse_mode='HTML')
+    return
 
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -945,7 +941,6 @@ def create_application():
     application.add_handler(CommandHandler("link", postlink))
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_handler(MessageHandler(filters.FORWARDED, handle_forward))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_photo_link))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_movies))
 
     return application
