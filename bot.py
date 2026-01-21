@@ -53,7 +53,11 @@ def migrate_database():
 migrate_database()
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-ADMIN_ID = os.environ.get('ADMIN_ID')
+ADMIN_ID_LIST = [id.strip() for id in os.environ.get('ADMIN_ID', '').split(',') if id.strip()]
+
+def is_admin(user_id):
+    """Foydalanuvchi admin ekanligini tekshirish"""
+    return str(user_id) in ADMIN_ID_LIST
 WEBHOOK_URL = os.environ.get('WEBHOOK_URL')
 PORT = int(os.environ.get('PORT', 5000))
 MOVIES_PER_PAGE = 20
@@ -215,34 +219,38 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     video_count, doc_count, audio_count, photo_count = get_movies_by_type()
 
     welcome_text = (
-        f"╔══════════════════════════════╗\n"
-        f"     🎬 <b>KINO QIDIRUV BOT</b> 🎬\n"
-        f"╚══════════════════════════════╝\n\n"
-        f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
-        f"🏠 <b>Premium Kino Kutubxonasi</b>\n"
-        f"┌─────────────────────────────┐\n"
-        f"│  📊 Jami: <b>{movie_count}</b> ta kontent      │\n"
-        f"│  🎬 Videolar: <b>{video_count}</b>              │\n"
-        f"│  📄 Dokumentlar: <b>{doc_count}</b>            │\n"
-        f"│  🎵 Audiolar: <b>{audio_count}</b>              │\n"
-        f"│  📸 Rasmlar: <b>{photo_count}</b>              │\n"
-        f"└─────────────────────────────┘\n\n"
-        f"💎 <b>IMKONIYATLAR:</b>\n"
-        f"├ 🔍 Tez qidiruv\n"
-        f"├ 🎲 Tasodifiy kino\n"
-        f"├ 📋 To'liq ro'yxat\n"
-        f"└ ⚡ Bir zumda yuklash\n\n"
-        f"✨ <i>Kino nomini yozing yoki tugmalardan foydalaning!</i>"
+        f"💖🌸💖🌸💖🌸💖🌸💖🌸💖\n"
+        f"     ✨ <b>ANIME && DRAMMA</b> ✨\n"
+        f"💖🌸💖🌸💖🌸💖🌸💖🌸💖\n\n"
+        f"Assalomu alaykum, <b>{user_name}</b>! 💕✨\n\n"
+        f"💓 <b>Sevimli Anime va Drammalar</b> 💓\n"
+        f"🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸\n"
+        f"💞 Jami: <b>{movie_count}</b> ta to'plam\n"
+        f"🎬 Videolar: <b>{video_count}</b>\n"
+        f"📄 Fayllar: <b>{doc_count}</b>\n"
+        f"🎵 Musiqalar: <b>{audio_count}</b>\n"
+        f"📸 Rasmlar: <b>{photo_count}</b>\n"
+        f"🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸\n\n"
+        f"💝 <b>MENU TANLANG:</b> 💝\n"
+        f"💗 /list - To'liq ro'yxat 📋\n"
+        f"💗 /random - Tasodifiy 🎲\n"
+        f"💗 /help - Yordam 📖\n"
+        f"💗 /about - Biz haqimizda ℹ️\n\n"
+        f"✨ <i>Nomini yozing va tomoshadan zavqlaning!</i> 💕"
     )
 
     keyboard = [
         [
-            InlineKeyboardButton("📋 Barcha Kinolar", callback_data="cmd_list"),
+            InlineKeyboardButton("🎬 Kinolar", callback_data="cmd_list"),
             InlineKeyboardButton("🎲 Tasodifiy", callback_data="cmd_random")
         ],
         [
-            InlineKeyboardButton("ℹ️ Bot haqida", callback_data="cmd_about"),
-            InlineKeyboardButton("📖 Yordam", callback_data="cmd_help")
+            InlineKeyboardButton("📊 Statistika", callback_data="cmd_stats"),
+            InlineKeyboardButton("ℹ️ Ma'lumot", callback_data="cmd_about")
+        ],
+        [
+            InlineKeyboardButton("📖 Yordam", callback_data="cmd_help"),
+            InlineKeyboardButton("🏠 Bosh sahifa", callback_data="cmd_start")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -254,11 +262,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Yordam buyrug'i"""
     user_id = str(update.effective_user.id)
 
-    if user_id == ADMIN_ID:
+    if is_admin(user_id):
         help_text = (
-            "╔══════════════════════════════╗\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n"
             "      ⚙️ <b>ADMIN PANELI</b> ⚙️\n"
-            "╚══════════════════════════════╝\n\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n\n"
             "🔐 <b>BOSHQARUV BUYRUQLARI:</b>\n"
             "│ 📊 /stats - Statistika        │\n"
             "│ 📋 /list - Kinolar ro'yxati   │\n"
@@ -268,13 +276,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📥 <b>KINO QO'SHISH:</b>\n"
             "├ Kanaldan video/fayl forward qiling\n"
             "├ Caption = Kino nomi\n"
-            "└ Avtomatik saqlanadi"
+            "└ Avtomatik saqlanadi\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖"
         )
     else:
         help_text = (
-            "╔══════════════════════════════╗\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n"
             "      📖 <b>YORDAM</b> 📖\n"
-            "╚══════════════════════════════╝\n\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n\n"
             "🎯 <b>QANDAY FOYDALANISH:</b>\n"
             "│ 1️⃣ Kino nomini yozing         │\n"
             "│ 2️⃣ Ro'yxatdan tanlang         │\n"
@@ -284,7 +293,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "├ /list - To'liq ro'yxat\n"
             "├ /random - Tasodifiy kino\n"
             "└ /about - Bot haqida\n\n"
-            "🍿 <i>Yaxshi tomosha!</i>"
+            "🍿 <i>Yaxshi tomosha!</i>\n"
+            "💖🌸💖🌸💖🌸💖🌸💖🌸💖"
         )
 
     await update.message.reply_text(help_text, parse_mode='HTML')
@@ -296,22 +306,21 @@ async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     video_count, doc_count, audio_count, photo_count = get_movies_by_type()
 
     about_text = (
-        "╔══════════════════════════════╗\n"
-        "      ℹ️ <b>BOT HAQIDA</b> ℹ️\n"
-        "╚══════════════════════════════╝\n\n"
-        "🎬 <b>Kino Qidiruv Bot</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "Bu bot orqali siz eng yaxshi kinolarni\n"
-        "qidirib topishingiz va yuklab olishingiz\n"
-        "mumkin. Tez, qulay va bepul!\n\n"
-        "📊 <b>STATISTIKA:</b>\n"
-        f"├ 📁 Jami: <b>{movie_count}</b> ta\n"
-        f"├ 🎬 Videolar: <b>{video_count}</b>\n"
-        f"├ 📄 Dokumentlar: <b>{doc_count}</b>\n"
-        f"├ 🎵 Audiolar: <b>{audio_count}</b>\n"
-        f"└ 📸 Rasmlar: <b>{photo_count}</b>\n\n"
-        "🚀 <b>Versiya:</b> 3.0 Premium\n\n"
-        "💎 <i>Har kuni yangi kinolar!</i>"
+        "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n"
+        "      ✨ <b>BOT HAQIDA</b> ✨\n"
+        "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n\n"
+        "🎬 <b>Anime && Dramma Bot</b>\n"
+        "💓💓💓💓💓💓💓💓💓💓💓\n\n"
+        "Eng so'nggi va mashhur anime hamda\n"
+        "drammalarni qidirib toping va yuklab\n"
+        "oling. Hammasi siz uchun! ✨💕\n\n"
+        "💖 <b>STATISTIKA:</b>\n"
+        f"💕 Jami: <b>{movie_count}</b> ta\n"
+        f"🎬 Videolar: <b>{video_count}</b>\n"
+        f"📄 Fayllar: <b>{doc_count}</b>\n"
+        f"🎵 Musiqalar: <b>{audio_count}</b>\n"
+        f"📸 Rasmlar: <b>{photo_count}</b>\n\n"
+        "🌸 <i>Har kuni yangi qismlar!</i> 🌸"
     )
 
     keyboard = [[InlineKeyboardButton("🏠 Bosh sahifa", callback_data="cmd_start")]]
@@ -383,7 +392,7 @@ async def list_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Statistika buyrug'i (faqat admin)"""
     user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
+    if not is_admin(user_id):
         return
 
     total = get_movie_count()
@@ -391,22 +400,20 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total_users = get_user_stats()
 
     stats_text = (
-        "╔══════════════════════════════╗\n"
-        "     📊 <b>BOT STATISTIKASI</b> 📊\n"
-        "╚══════════════════════════════╝\n\n"
-        "📁 <b>KONTENT MA'LUMOTLARI</b>\n"
-        "┌─────────────────────────────┐\n"
-        f"│  📊 Jami: <b>{total}</b> ta fayl          │\n"
-        f"│  🎬 Videolar: <b>{video_count}</b>              │\n"
-        f"│  📄 Dokumentlar: <b>{doc_count}</b>            │\n"
-        f"│  🎵 Audiolar: <b>{audio_count}</b>              │\n"
-        f"│  📸 Rasmlar: <b>{photo_count}</b>              │\n"
-        "└─────────────────────────────┘\n\n"
-        "👥 <b>FOYDALANUVCHI MA'LUMOTLARI</b>\n"
-        "┌─────────────────────────────┐\n"
-        f"│  👤 Jami: <b>{total_users}</b> ta odam      │\n"
-        "└─────────────────────────────┘\n\n"
-        "💎 <i>Premium Kino Bot v3.0</i>"
+        "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n"
+        "     📊 <b>BOT HOLATI</b> 📊\n"
+        "💖🌸💖🌸💖🌸💖🌸💖🌸💖\n\n"
+        "💓 <b>KONTENT MA'LUMOTLARI</b>\n"
+        "🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸\n"
+        f"💕 Jami: <b>{total}</b> ta fayl\n"
+        f"🎬 Videolar: <b>{video_count}</b>\n"
+        f"📄 Fayllar: <b>{doc_count}</b>\n"
+        f"🎵 Musiqalar: <b>{audio_count}</b>\n"
+        f"📸 Rasmlar: <b>{photo_count}</b>\n"
+        "🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸\n\n"
+        "👥 <b>FOYDALANUVCHILAR</b>\n"
+        f"👤 Jami: <b>{total_users}</b> ta odam\n\n"
+        "💖 <i>Premium Bot Xizmati</i> 💖"
     )
 
     await update.message.reply_text(stats_text, parse_mode='HTML')
@@ -415,7 +422,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def delete_movie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Kino o'chirish buyrug'i (faqat admin)"""
     user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
+    if not is_admin(user_id):
         return
 
     if not context.args:
@@ -434,7 +441,7 @@ async def delete_movie(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Kanaldan forward qilingan kontentni qabul qilish"""
     user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
+    if not is_admin(user_id):
         return
 
     message = update.message
@@ -504,7 +511,7 @@ async def handle_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     success_text = (
         f"✅ <b>MUVAFFAQIYATLI SAQLANDI!</b>\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"💓💓💓💓💓💓💓💓💓💓💓\n"
         f"{file_emoji} <b>Nomi:</b> {movie_name}\n"
         f"🆔 <b>ID:</b> <code>{movie_id}</code>"
     )
@@ -513,9 +520,9 @@ async def handle_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['waiting_for_photo_link'] = True
         context.user_data['photo_name'] = movie_name
         context.user_data['photo_file_id'] = file_id
-        success_text += f"\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Jami kinolar: <b>{total}</b>\n\n🔗 <b>Kanal linkini yubor:</b>\n<i>Misol: https://t.me/mychannel/123</i>"
+        success_text += f"\n💓💓💓💓💓💓💓💓💓💓💓\n\n📊 Jami kinolar: <b>{total}</b>\n\n🔗 <b>Kanal linkini yubor:</b>\n<i>Misol: https://t.me/mychannel/123</i>"
     else:
-        success_text += f"\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Jami kinolar: <b>{total}</b>"
+        success_text += f"\n💓💓💓💓💓💓💓💓💓💓💓\n\n📊 Jami kinolar: <b>{total}</b>"
 
     await message.reply_text(success_text, parse_mode='HTML')
 
@@ -523,7 +530,7 @@ async def handle_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def createlink(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin uchun rasm link yaratish"""
     user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
+    if not is_admin(user_id):
         return
 
     await update.message.reply_text(
@@ -537,7 +544,7 @@ async def createlink(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def postlink(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin rasim linkini inline tugmali qilib post qilish"""
     user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID:
+    if not is_admin(user_id):
         return
 
     if not context.args:
@@ -582,7 +589,7 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Rasim link uchun kanal linkini qabul qilish
     if context.user_data.get('waiting_for_photo_link'):
-        if str(user_id) != ADMIN_ID:
+        if not is_admin(user_id):
             return
         
         channel_link = update.message.text.strip()
@@ -606,11 +613,11 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         success_text = (
             f"✅ <b>LINK SAQLANDI!</b>\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💓💓💓💓💓💓💓💓💓💓💓\n"
             f"📸 <b>Nomi:</b> {photo_name}\n"
             f"🔗 <b>Link ID:</b> <code>{link_id}</code>\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"<i>/link {link_id}</i> - inline tugmali post qilish"
+            f"💓💓💓💓💓💓💓💓💓💓💓\n\n"
+            f"💕 <i>/link {link_id}</i> - post qilish"
         )
 
         await update.message.reply_text(success_text, parse_mode='HTML')
@@ -642,7 +649,7 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results = search_movies_db(query)
 
     if not results:
-        await update.message.reply_text(f"😔 <b>Hech narsa topilmadi</b>\n\n🔍 So'rov: <code>{query}</code>\n\n💡 Boshqa nom bilan qidirib ko'ring", parse_mode='HTML')
+        await update.message.reply_text(f"💖🌸💖🌸💖🌸💖🌸💖🌸💖\n😔 <b>Hech narsa topilmadi</b>\n\n🔍 So'rov: <code>{query}</code>\n\n💡 Boshqa nom bilan qidirib ko'ring\n💖🌸💖🌸💖🌸💖🌸💖🌸💖", parse_mode='HTML')
         return
 
     total = len(results)
@@ -660,7 +667,7 @@ async def search_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton(f"Keyingi ({total - end_idx}) ▶️", callback_data=f"page_{page + 1}_{query}")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    result_text = f"🔍 <b>QIDIRUV NATIJALARI</b>\n\n━━━━━━━━━━━━━━━━━━━━\n📊 Topildi: <b>{total}</b> ta\n📄 Sahifa: <b>{page + 1}</b> / <b>{(total - 1) // MOVIES_PER_PAGE + 1}</b>\n━━━━━━━━━━━━━━━━━━━━\n\n👇 Kinoni tanlang:"
+    result_text = f"🔍 <b>QIDIRUV NATIJALARI</b>\n\n💓💓💓💓💓💓💓💓💓💓💓\n📊 Topildi: <b>{total}</b> ta\n📄 Sahifa: <b>{page + 1}</b> / <b>{(total - 1) // MOVIES_PER_PAGE + 1}</b>\n💓💓💓💓💓💓💓💓💓💓💓\n\n👇 Kinoni tanlang:"
 
     await update.message.reply_text(result_text, reply_markup=reply_markup, parse_mode='HTML')
     return
@@ -733,7 +740,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard.append(nav_buttons)
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        result_text = f"🔍 <b>QIDIRUV NATIJALARI</b>\n\n━━━━━━━━━━━━━━━━━━━━\n📊 Topildi: <b>{total}</b> ta\n📄 Sahifa: <b>{page + 1}</b> / <b>{(total - 1) // MOVIES_PER_PAGE + 1}</b>\n━━━━━━━━━━━━━━━━━━━━\n\n👇 Kinoni tanlang:"
+        result_text = f"🔍 <b>QIDIRUV NATIJALARI</b>\n\n💓💓💓💓💓💓💓💓💓💓💓\n📊 Topildi: <b>{total}</b> ta\n📄 Sahifa: <b>{page + 1}</b> / <b>{(total - 1) // MOVIES_PER_PAGE + 1}</b>\n💓💓💓💓💓💓💓💓💓💓💓\n\n👇 Kinoni tanlang:"
         await query.edit_message_text(result_text, reply_markup=reply_markup, parse_mode='HTML')
 
     elif data.startswith("list_"):
@@ -950,6 +957,11 @@ def get_webhook_url():
     """Webhook URL ni avtomatik aniqlash"""
     if WEBHOOK_URL:
         return WEBHOOK_URL
+
+    # Render uchun (Render o'zi RENDER_EXTERNAL_URL ni beradi)
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_url:
+        return f"{render_url.rstrip('/')}/webhook"
 
     replit_domain = os.environ.get('REPLIT_DOMAINS', '').split(',')[0]
     if replit_domain:
