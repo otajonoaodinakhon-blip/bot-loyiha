@@ -21,7 +21,17 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "kino-bot-secret-key"
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+
+# Database URL tekshiruvi va SQLite fallback
+db_url = os.environ.get("DATABASE_URL")
+if not db_url:
+    db_url = "sqlite:///kino_bot.db"
+    logger.info("DATABASE_URL topilmadi, SQLite ishlatilmoqda: kino_bot.db")
+elif db_url.startswith("postgres://"):
+    # SQLAlchemy postgres:// ni qo'llab-quvvatlamasligi mumkin, postgresql:// ga o'zgartiramiz
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -954,30 +964,35 @@ def create_application():
 
 
 def get_webhook_url():
-    """Webhook URL ni avtomatik aniqlash"""
+    """Webhook URL ni har qanday platforma uchun avtomatik aniqlash"""
+    # 1. Agar foydalanuvchi qo'lda bergan bo'lsa
     if WEBHOOK_URL:
         return WEBHOOK_URL
 
-    # Render uchun (Render o'zi RENDER_EXTERNAL_URL ni beradi)
-    render_url = os.environ.get('RENDER_EXTERNAL_URL')
-    if render_url:
-        return f"{render_url.rstrip('/')}/webhook"
+    # 2. Render platformasi uchun
+    render_external_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_external_url:
+        return f"{render_external_url.rstrip('/')}/webhook"
+    
+    render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if render_host:
+        return f"https://{render_host}/webhook"
 
-    replit_domain = os.environ.get('REPLIT_DOMAINS', '').split(',')[0]
+    # 3. Replit platformasi uchun
+    replit_slug = os.environ.get('REPLIT_SLUG')
+    replit_user = os.environ.get('REPLIT_USER')
+    if replit_slug and replit_user:
+        # Replit'ning yangi domen formati
+        return f"https://{replit_slug}.{replit_user}.repl.co/webhook"
+    
+    replit_domain = os.environ.get('REPLIT_DEV_DOMAIN')
     if replit_domain:
         return f"https://{replit_domain}/webhook"
 
+    # 4. Railway platformasi uchun
     railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
     if railway_domain:
         return f"https://{railway_domain}/webhook"
-
-    render_domain = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if render_domain:
-        return f"https://{render_domain}/webhook"
-
-    heroku_app = os.environ.get('HEROKU_APP_NAME')
-    if heroku_app:
-        return f"https://{heroku_app}.herokuapp.com/webhook"
 
     return None
 
